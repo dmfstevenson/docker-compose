@@ -1,0 +1,204 @@
+---
+version: "3"
+services:
+  plex:
+    image: ghcr.io/linuxserver/plex
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      # - PLEX_CLAIM= #optional
+    volumes:
+      - /home/predj/docker/plex:/config
+      - /home/predj/share/Downloads/Movies:/movies
+      - /home/predj/share/Downloads/TV Shows:/tvshows
+    restart: unless-stopped
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 9000:9000
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/predj/docker/portainer/portainer_data:/data
+
+  radarr:
+    image: ghcr.io/linuxserver/radarr
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+      - UMASK=022 #optional
+    volumes:
+      - /home/predj/docker/radarr/config:/config
+      - /home/predj/share/Downloads/Movies:/movies
+      - /home/predj/share/Downloads/Downloads:/downloads
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+  sonarr:
+    image: ghcr.io/linuxserver/sonarr
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+      - UMASK_SET=022 #optional
+    volumes:
+      - /home/predj/docker/sonarr/config:/config
+      - /home/predj/share/Downloads/TV Shows:/tv
+      - /home/predj/share/Downloads/Downloads:/downloads
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+  unifi:
+    image: linuxserver/unifi-controller
+    container_name: unifi
+    environment:
+      - TZ=Australia/Sydney
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - /home/predj/docker/unifi/config:/config
+    ports:
+      - 3478:3478/udp
+      - 10001:10001/udp
+      - 8080:8080
+      - 8081:8081
+      - 8443:8443
+      - 8843:8843
+      - 8880:8880
+      - 6789:6789
+    restart: unless-stopped
+
+  jackett:
+    image: ghcr.io/linuxserver/jackett
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+    # - RUN_OPTS=run options here #optional
+    volumes:
+      - /home/predj/docker/jackett/config:/config
+      - /home/predj/share/Downloads/Downloads:/downloads
+    ports:
+      - 9117:9117
+    restart: unless-stopped
+
+  # jellyfin:
+  #  image: ghcr.io/linuxserver/jellyfin
+  #  container_name: jellyfin
+  #  network_mode: host
+  #  environment:
+  #    - PUID=1000
+  #    - PGID=1000
+  #    - TZ=Australia/Sydney
+  #    - JELLYFIN_PublishedServerUrl=192.168.0.205
+  #  volumes:
+  #    - /home/predj/docker/jellyfin/config:/config
+  #    - /home/predj/share/Downloads/TV Shows:/data/tvshows
+  #    - /home/predj/share/Downloads/Movies:/data/movies
+  #  ports:
+  #    - 8096:8096
+  #  devices:
+  #     - /dev/dri:/dev/dri
+  #  restart: unless-stopped
+
+  ombi:
+    image: lscr.io/linuxserver/ombi:latest
+    container_name: ombi
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+      - BASE_URL=/ombi #optional
+    volumes:
+      - /home/predj/docker/ombi/config:/config
+      - /home/predj/share/Downloads/Movies:/movies
+      - /home/predj/share/Downloads/TV Shows:/tv
+    ports:
+      - 3579:3579
+    restart: unless-stopped
+
+  watchtower:
+    container_name: watchtower
+    environment:
+      - TZ=Australia/Sydney
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=3600
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+      - WEBUI_PORT=8090
+    volumes:
+      - /home/predj/docker/qbittorrent/config:/config
+      - /home/predj/docker/qbittorrent/watch:/watch
+      - /home/predj/share/Downloads/Downloads:/downloads
+    #  ports:
+    #  - 6881:6881
+    #  - 6881:6881/udp
+    #  - 8090:8090
+    restart: unless-stopped
+    depends_on:
+      - nordvpn
+    network_mode: service:nordvpn
+
+  nordvpn:
+    # image: nordvpnlocal
+    image: ghcr.io/bubuntux/nordlynx
+    container_name: nordvpn
+    network_mode: bridge        # Required
+    cap_add:
+      - NET_ADMIN               # Required
+      - SYS_MODULE              # Required for TECHNOLOGY=NordLynx
+    sysctls:
+      - net.ipv4.conf.all.rp_filter=2
+    devices:
+      - /dev/net/tun            # Required
+    environment:                # Review https://github.com/bubuntux/nordvpn#environment-variables
+      - USER=gofeckyaselfjustin@gmail.com     # Required
+      - PASS=gofeckyaselfjustin        # Required
+      - CONNECT=United_States
+      - TECHNOLOGY=NordLynx
+      - NETWORK=192.168.0.0/24 
+      - PRIVATE_KEY=gofeckyaselfjustin 
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 8090:8090
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+
+  tautulli:
+    image: ghcr.io/linuxserver/tautulli
+    container_name: tautulli
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+    volumes:
+      - /home/predj/docker/tautulli:/config
+    ports:
+      - 8181:8181
+    restart: unless-stopped
