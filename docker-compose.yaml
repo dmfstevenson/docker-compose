@@ -2,7 +2,7 @@
 services:
   plex:
     image: ghcr.io/linuxserver/plex
-    container_name: plex-docker
+    container_name: plex
     network_mode: host
     environment:
       - PUID=1000
@@ -143,12 +143,12 @@ services:
     # image: nordvpnlocal
     image: ghcr.io/bubuntux/nordlynx
     container_name: nordvpn
-    network_mode: bridge        # Required
+    # network_mode: bridge        # Required
     cap_add:
       - NET_ADMIN               # Required
       - SYS_MODULE              # Required for TECHNOLOGY=NordLynx
-    sysctls:
-      - net.ipv4.conf.all.rp_filter=2
+    # sysctls:
+    #   - net.ipv4.conf.all.rp_filter=2
     devices:
       - /dev/net/tun            # Required
     environment:                # Review https://github.com/bubuntux/nordvpn#environment-variables
@@ -158,10 +158,10 @@ services:
       - TECHNOLOGY=NordLynx
       - NETWORK=192.168.1.0/24 
       - PRIVATE_KEY=sGdbnDGpmEP2ud22vI/k3nHwEVTQv6IbPXyjiieizHU=
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    # ulimits:
+    #   memlock:
+    #     soft: -1
+    #     hard: -1
     ports:
       - 8090:8090
       - 6881:6881
@@ -183,4 +183,27 @@ services:
     # devices:
       # - /path/to/device:/path/to/device #optional
     restart: unless-stopped
-    
+      #    3E7AqWAPcEXOCTIqhKagQaYfyTSnK36QcqdXQZdR
+
+  # unifi-controller:
+  #   image: lscr.io/linuxserver/unifi-controller:latest
+  #   container_name: unifi-controller
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Etc/UTC
+  #     # - MEM_LIMIT=1024 #optional
+  #     # - MEM_STARTUP=1024 #optional
+  #   volumes:
+  #     - /home/predj/docker/unifi/data:/config
+  #   ports:
+  #     - 8443:8443
+  #     - 3478:3478/udp
+  #     - 10001:10001/udp
+  #     - 8080:8080
+  #     # - 1900:1900/udp #optional
+  #     # - 8843:8843 #optional
+  #     # - 8880:8880 #optional
+  #     # - 6789:6789 #optional
+  #     # - 5514:5514/udp #optional
+  #   restart: unless-stopped
