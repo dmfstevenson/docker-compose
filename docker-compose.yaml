@@ -15,6 +15,22 @@ services:
       - /home/predj/share/Downloads/TV Shows:/tvshows
     restart: unless-stopped
 
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
+    volumes:
+      - /home/predj/docker/jellyfin:/config
+      - /home/predj/share/Downloads/Movies:/movies
+      - /home/predj/share/Downloads/TV Shows:/tv
+    devices:
+      - /dev/dri:/dev/dri  # Hardware transcoding (if available)
+    restart: unless-stopped
+
   portainer:
     container_name: portainer
     image: portainer/portainer-ce
@@ -139,29 +155,50 @@ services:
       - nordvpn
     network_mode: service:nordvpn
 
+  # nordvpn:
+  #   # image: nordvpnlocal
+  #   image: ghcr.io/bubuntux/nordlynx
+  #   container_name: nordvpn
+  #   # network_mode: bridge        # Required
+  #   cap_add:
+  #     - NET_ADMIN               # Required
+  #     - SYS_MODULE              # Required for TECHNOLOGY=NordLynx
+  #   # sysctls:
+  #   #   - net.ipv4.conf.all.rp_filter=2
+  #   devices:
+  #     - /dev/net/tun            # Required
+  #   environment:                # Review https://github.com/bubuntux/nordvpn#environment-variables
+  #     - USER=dstevenson1986@gmail.com     # Required
+  #     - PASS=ntwz0GU083b0p9SwDaJO9        # Required
+  #     - CONNECT=United_States
+  #     - TECHNOLOGY=NordLynx
+  #     - NETWORK=192.168.1.0/24 
+  #     - PRIVATE_KEY=sGdbnDGpmEP2ud22vI/k3nHwEVTQv6IbPXyjiieizHU=
+  #   # ulimits:
+  #   #   memlock:
+  #   #     soft: -1
+  #   #     hard: -1
+  #   ports:
+  #     - 8090:8090
+  #     - 6881:6881
+  #     - 6881:6881/udp
+  #   restart: unless-stopped
+
   nordvpn:
-    # image: nordvpnlocal
-    image: ghcr.io/bubuntux/nordlynx
-    container_name: nordvpn
-    # network_mode: bridge        # Required
+    image: ghcr.io/arkandias/nordlynx:latest
+    container_name: nordlynx
     cap_add:
-      - NET_ADMIN               # Required
-      - SYS_MODULE              # Required for TECHNOLOGY=NordLynx
-    # sysctls:
-    #   - net.ipv4.conf.all.rp_filter=2
-    devices:
-      - /dev/net/tun            # Required
-    environment:                # Review https://github.com/bubuntux/nordvpn#environment-variables
-      - USER=dstevenson1986@gmail.com     # Required
-      - PASS=ntwz0GU083b0p9SwDaJO9        # Required
-      - CONNECT=United_States
-      - TECHNOLOGY=NordLynx
-      - NETWORK=192.168.1.0/24 
+      - NET_ADMIN # required
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1 # required
+      - net.ipv6.conf.all.disable_ipv6=1 # recommended
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Sydney
       - PRIVATE_KEY=sGdbnDGpmEP2ud22vI/k3nHwEVTQv6IbPXyjiieizHU=
-    # ulimits:
-    #   memlock:
-    #     soft: -1
-    #     hard: -1
+      - COUNTRY_CODE=US
+      - CATEGORY=standard
     ports:
       - 8090:8090
       - 6881:6881
@@ -178,6 +215,10 @@ services:
       - TZ=Etc/UTC
     volumes:
       - /home/predj/docker/homeassistant/data:/config
+      - /var/run/dbus:/var/run/dbus:ro
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     # ports:
     #   - 8123:8123 #optional
     # devices:
@@ -185,25 +226,17 @@ services:
     restart: unless-stopped
       #    3E7AqWAPcEXOCTIqhKagQaYfyTSnK36QcqdXQZdR
 
-  # unifi-controller:
-  #   image: lscr.io/linuxserver/unifi-controller:latest
-  #   container_name: unifi-controller
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=Etc/UTC
-  #     # - MEM_LIMIT=1024 #optional
-  #     # - MEM_STARTUP=1024 #optional
-  #   volumes:
-  #     - /home/predj/docker/unifi/data:/config
-  #   ports:
-  #     - 8443:8443
-  #     - 3478:3478/udp
-  #     - 10001:10001/udp
-  #     - 8080:8080
-  #     # - 1900:1900/udp #optional
-  #     # - 8843:8843 #optional
-  #     # - 8880:8880 #optional
-  #     # - 6789:6789 #optional
-  #     # - 5514:5514/udp #optional
-  #   restart: unless-stopped
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /home/predj/docker/bazarr/config:/config
+      - /home/predj/share/Downloads/Movies:/movies
+      - /home/predj/share/Downloads/TV Shows:/tv
+    ports:
+      - 6767:6767
+    restart: unless-stopped
